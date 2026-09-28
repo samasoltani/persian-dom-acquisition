@@ -116,6 +116,21 @@ def bare_lv_noun(row):
     return True
 
 
+IDIOMS = {("cheshm", "gozashtæn"), ("chesh", "gozashtæn")}   # چشم گذاشتن (قایم‌موشک)
+
+
+def infinitive_or_passive(row):
+    """«لباس عوض کردنت» (مصدر) و «دستش کنده شد» (مجهول) مفعولِ رادار ندارند."""
+    v = get_tok(row["utt_id"], row["verb_position"])
+    if v is None:
+        return False
+    if "inf" in str(v["pos"]).split(":"):
+        return True
+    nxt = get_tok(row["utt_id"], int(row["verb_position"]) + 1)
+    return (nxt is not None and str(nxt["lemma"]) == "shodæn"
+            and "ptcp" in str(v["pos"]).split(":") + ["ptcp" if "PTCP" in str(v["features"]) else ""])
+
+
 def inside_pp(row):
     """آیا اسم درونِ گروهِ حرف‌اضافه‌ای است؟
     از اسم به عقب می‌رویم تا وقتی واژه‌ی قبلی وابسته‌ی همین گروهِ اسمی است
@@ -166,6 +181,11 @@ steps = [
      lambda d: d.apply(inside_pp, axis=1)),
     ("۸) قیدِ زمان/مکان و «راست گفتن»",
      lambda d: d["host_lemma"].isin(ADVERBIAL_NOUNS)),
+    ("۹) مصدر یا فعلِ مجهول (عوض کردنت، کنده شد)",
+     lambda d: d.apply(infinitive_or_passive, axis=1)),
+    ("۱۰) اصطلاح (چشم گذاشتن) و واژه‌های غیرِاسمی (دیگه، آخه)",
+     lambda d: d.apply(lambda r: (r["host_lemma"], r["verb_lemma"]) in IDIOMS, axis=1)
+               | d["host_lemma"].isin({"dige", "axe", "æxe"})),
 ]
 
 removed_examples = {}
