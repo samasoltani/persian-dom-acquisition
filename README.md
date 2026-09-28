@@ -43,6 +43,7 @@ Scripts in `codes/` are run in numerical order. Each script lists its inputs and
 |---|---|---|
 | 01 | `01-inspect_corpus.py` | Report speakers, utterance counts and age ranges per file |
 | 02 | `02-inspect_tiers.py` | Show examples of dependent tiers (%xmor, %xcau, ...) and %xmor tag frequencies |
+| 03 | `03-parse_xmor.py` | Parse %xmor into utterance and token tables; report rā/ro markers and their hosts |
 | … | … | (added as the project proceeds) |
 
 ## Annotation scheme (summary)
