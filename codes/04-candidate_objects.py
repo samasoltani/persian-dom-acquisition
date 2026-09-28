@@ -118,6 +118,8 @@ for utt_id, g in toks.groupby("utt_id", sort=False):
             "host_pos": host["pos"] if host else "",
             "host_suffixes": host["suffixes"] if host else "",
             "host_distance": (i - h_idx) if h_idx is not None else None,
+            "host_position": tokens[h_idx]["position"] if h_idx is not None else None,
+            "verb_position": tokens[v_idx]["position"] if v_idx is not None else None,
             "verb_key": verb_key(tokens, v_idx) if v_idx is not None else "",
             "marked": 1,
         })
@@ -161,6 +163,7 @@ for utt_id, g in toks.groupby("utt_id", sort=False):
             "group": speaker_group(noun["speaker"]),
             "host_lemma": noun["lemma"], "host_pos": noun["pos"],
             "host_suffixes": noun["suffixes"], "host_distance": None,
+            "host_position": noun["position"], "verb_position": tok["position"],
             "verb_key": key, "marked": 0,
         })
 

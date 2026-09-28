@@ -45,6 +45,7 @@ Scripts in `codes/` are run in numerical order. Each script lists its inputs and
 | 02 | `02-inspect_tiers.py` | Show examples of dependent tiers (%xmor, %xcau, ...) and %xmor tag frequencies |
 | 03 | `03-parse_xmor.py` | Parse %xmor into utterance and token tables; report rā/ro markers and their hosts |
 | 04 | `04-candidate_objects.py` | Build the list of rā-taking verbs; extract marked objects and unmarked object candidates (envelope of variation) |
+| 05 | `05-filter_candidates.py` | Filter unmarked candidates (copular/intransitive verbs, pronoun–verb agreement, vocatives, rare rā-verbs) |
 | … | … | (added as the project proceeds) |
 
 ## Annotation scheme (summary)
