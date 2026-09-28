@@ -101,6 +101,21 @@ def is_vocative(row):
     return int(row["host_position"]) == 0 and len(words) > 1 and words[1] == ","
 
 
+def bare_lv_noun(row):
+    """«کار کردن» به معنای «کار کردن» (فعل مرکب) حذف شود،
+    ولی «چی کار کنی»، «یه کاری کرد»، «این کار» بماند؛
+    چون این‌جا «کار» یعنی «چه کاری/یک کاری» و مفعول است (چه کاری را انجام دهی).
+    قاعده: اگر درست پیش از اسم پرسش‌واژه، کمیت‌نما، اشاره یا صفت آمده باشد، مفعول است."""
+    if row["host_lemma"] not in LV_NOUNS or row["verb_lemma"] != "kærdæn":
+        return False
+    prev = get_tok(row["utt_id"], int(row["host_position"]) - 1)
+    if prev is not None and str(prev["pos"]).startswith(("wh", "qn", "pro:dem", "adj", "num")):
+        return False
+    if "INDEF" in str(row["host_suffixes"]).split():
+        return False
+    return True
+
+
 def inside_pp(row):
     """آیا اسم درونِ گروهِ حرف‌اضافه‌ای است؟
     از اسم به عقب می‌رویم تا وقتی واژه‌ی قبلی وابسته‌ی همین گروهِ اسمی است
@@ -145,8 +160,8 @@ steps = [
      lambda d: d.apply(is_vocative, axis=1)),
     ("۵) پرسش‌واژه‌ی «کی» (معمولاً فاعل)",
      lambda d: d["host_lemma"].isin({"ki"})),
-    ("۶) جزءِ اسمیِ فعلِ مرکب (کار کردن، بازی کردن، ...)",
-     lambda d: d["host_lemma"].isin(LV_NOUNS) & (d["verb_lemma"] == "kærdæn")),
+    ("۶) جزءِ اسمیِ فعلِ مرکب بدون وابسته (کار می‌کنه، بازی کن)",
+     lambda d: d.apply(bare_lv_noun, axis=1)),
     ("۷) درونِ گروهِ حرف‌اضافه‌ای (از این کارتا، واسه چی)",
      lambda d: d.apply(inside_pp, axis=1)),
     ("۸) قیدِ زمان/مکان و «راست گفتن»",
