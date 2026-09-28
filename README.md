@@ -28,7 +28,7 @@ data/
   perdt/        PerDT extraction
   annotation/   Excel files for manual annotation
   processed/    Final analysis-ready datasets
-codes/          Scripts, prefixed with their run order (1-, 2-, ...)
+codes/          Scripts, prefixed with their two-digit run order (01-, 02-, ...)
 results/
   tables/
   figures/
@@ -41,7 +41,7 @@ Scripts in `codes/` are run in numerical order. Each script lists its inputs and
 
 | Step | Script | Purpose |
 |---|---|---|
-| 1 | `1-inspect_corpus.py` | Report speakers, utterance counts and age ranges per file |
+| 01 | `01-inspect_corpus.py` | Report speakers, utterance counts and age ranges per file |
 | … | … | (added as the project proceeds) |
 
 ## Annotation scheme (summary)
