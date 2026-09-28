@@ -44,6 +44,20 @@ PRONOUN_PERSON = {
 }
 PERSONS = {"1S", "2S", "3S", "1P", "2P", "3P"}
 
+# صافیِ ۶: اسم‌هایی که با «کردن» فعل مرکب می‌سازند ولی %xmor اسم برچسب زده
+LV_NOUNS = {"kar", "bazi", "komæk", "gerye", "xænde"}
+
+# صافیِ ۷: حرف‌اضافه‌هایی که %xmor گاهی prep برچسب نزده
+EXTRA_PREPS = {"vase", "bæra", "bære", "baraye", "bæraye"}
+
+# صافیِ ۸: قیدهای زمان و مکان، و اصطلاح «راست گفتن»
+ADVERBIAL_NOUNS = {
+    "væqt", "inja", "unja", "hæminja", "hæmunja", "koja", "hær_ja",
+    "emruz", "diruz", "færda", "shæb", "sob", "zohr", "æsr", "ælan", "hala",
+    "dæfe", "bar", "shænbe", "yekshænbe", "doshænbe", "seshænbe",
+    "chaharshænbe", "pænjshænbe", "jome", "rast",
+}
+
 toks = pd.read_csv(PROC_DIR / "03-tokens.csv", keep_default_na=False)
 marked = pd.read_csv(PROC_DIR / "04-marked_objects.csv", keep_default_na=False)
 cands = pd.read_csv(PROC_DIR / "04-unmarked_candidates.csv", keep_default_na=False)
@@ -56,13 +70,23 @@ def verb_lemma(key):
     return key.split("_")[-1]
 
 
-def verb_person(row):
-    """شخص/شمارِ فعل از برچسب‌های %xmor (مثلاً PRES 1S)."""
+def get_tok(utt_id, position):
     try:
-        t = tok_index.loc[(row["utt_id"], int(row["verb_position"]))]
+        return tok_index.loc[(utt_id, int(position))]
     except (KeyError, ValueError):
+        return None
+
+
+def verb_person(row):
+    """شخص/شمارِ فعل از برچسب‌های %xmor (مثلاً PRES 1S).
+    در فعل‌های چندجزئی (دیده بودی) شخص روی فعلِ کمکیِ بعدی است."""
+    t = get_tok(row["utt_id"], row["verb_position"])
+    if t is None:
         return ""
     tags = set(f"{t['features']} {t['suffixes']}".split())
+    aux = get_tok(row["utt_id"], int(row["verb_position"]) + 1)
+    if aux is not None and str(aux["pos"]).startswith("v:aux"):
+        tags |= set(f"{aux['features']} {aux['suffixes']}".split())
     found = tags & PERSONS
     if found:
         return sorted(found)[0]
@@ -75,6 +99,26 @@ def is_vocative(row):
     """واژه‌ی اولِ گفته که پس از آن ویرگول آمده (مامان ، بده)."""
     words = str(row["text"]).split()
     return int(row["host_position"]) == 0 and len(words) > 1 and words[1] == ","
+
+
+def inside_pp(row):
+    """آیا اسم درونِ گروهِ حرف‌اضافه‌ای است؟
+    از اسم به عقب می‌رویم تا وقتی واژه‌ی قبلی وابسته‌ی همین گروهِ اسمی است
+    (اشاره، کمیت‌نما، عدد، یا اسمی با کسره‌ی اضافه)، و می‌بینیم به حرف اضافه می‌رسیم یا نه.
+    مثال: از + این + کارتا  |  به + این + اسکیته  |  واسه + چی"""
+    j = int(row["host_position"]) - 1
+    while j >= 0:
+        t = get_tok(row["utt_id"], j)
+        if t is None:
+            return False
+        pos, lemma, suffixes = str(t["pos"]), str(t["lemma"]), str(t["suffixes"]).split()
+        if pos.startswith("prep") or lemma in EXTRA_PREPS:
+            return True
+        if pos.startswith(("pro:dem", "qn", "num")) or "EZ" in suffixes:
+            j -= 1
+            continue
+        return False
+    return False
 
 
 cands["verb_lemma"] = cands["verb_key"].map(verb_lemma)
@@ -101,6 +145,12 @@ steps = [
      lambda d: d.apply(is_vocative, axis=1)),
     ("۵) پرسش‌واژه‌ی «کی» (معمولاً فاعل)",
      lambda d: d["host_lemma"].isin({"ki"})),
+    ("۶) جزءِ اسمیِ فعلِ مرکب (کار کردن، بازی کردن، ...)",
+     lambda d: d["host_lemma"].isin(LV_NOUNS) & (d["verb_lemma"] == "kærdæn")),
+    ("۷) درونِ گروهِ حرف‌اضافه‌ای (از این کارتا، واسه چی)",
+     lambda d: d.apply(inside_pp, axis=1)),
+    ("۸) قیدِ زمان/مکان و «راست گفتن»",
+     lambda d: d["host_lemma"].isin(ADVERBIAL_NOUNS)),
 ]
 
 removed_examples = {}
