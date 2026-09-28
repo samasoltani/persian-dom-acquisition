@@ -143,6 +143,9 @@ for child in CHILDREN:
 # ------------------------------------------------------------
 # ذخیره و گزارش
 # ------------------------------------------------------------
+if not file_rows:
+    raise SystemExit("\n❌ هیچ فایل .cha پیدا نشد؛ اول فایل‌ها را در data/raw/Lilia و data/raw/Minu بگذارید.")
+
 files_df = pd.DataFrame(file_rows)
 files_df.to_csv(OUT_DIR / "01-files_overview.csv", index=False, encoding="utf-8-sig")
 
