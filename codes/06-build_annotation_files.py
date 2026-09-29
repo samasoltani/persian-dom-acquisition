@@ -105,10 +105,21 @@ DEM_DET = {"in", "un", "hæmin", "hæmun"}
 POSSESSIVE = {"1S", "2S", "3S", "1P", "2P", "3P"}
 
 
-def get_tok(utt_id, pos):
+def to_int(x):
+    """جایگاه‌ها گاهی به‌صورتِ «1.0» ذخیره شده‌اند؛ به عددِ صحیح تبدیل می‌کند."""
     try:
-        return tok_index.loc[(utt_id, int(pos))]
-    except (KeyError, ValueError, TypeError):
+        return int(float(x))
+    except (ValueError, TypeError):
+        return None
+
+
+def get_tok(utt_id, pos):
+    pos = to_int(pos)
+    if pos is None or pos < 0:
+        return None
+    try:
+        return tok_index.loc[(utt_id, pos)]
+    except KeyError:
         return None
 
 
@@ -138,7 +149,8 @@ def definiteness_auto(r):
     sufs = set(str(r["host_suffixes"]).split())
     if sufs & POSSESSIVE:
         return "معرفه"
-    prev = get_tok(r["utt_id"], int(r["host_position"]) - 1) if r["host_position"] != "" else None
+    hp = to_int(r["host_position"])
+    prev = get_tok(r["utt_id"], hp - 1) if hp is not None else None
     if prev is not None:
         if str(prev["lemma"]) in DEM_DET and str(prev["pos"]).startswith("pro:dem"):
             return "معرفه"
