@@ -73,19 +73,46 @@ def is_nominal(tok):
     return tok["pos"].startswith(NOMINAL_POS_PREFIX) or tok["lemma"] in ADV_OBJECT_LEMMAS
 
 
-def verb_key(tokens, i):
-    """کلیدِ فعل: برای فعل سبک، جزء غیرفعلی + فعل (مثلاً baz_kærdæn)."""
+# صفت‌هایی که با «بودن» فعلِ متعدی می‌سازند: «اینو بلدی؟»
+TRANSITIVE_ADJ = {"bælæd"}
+
+# فعل‌هایی که اگر فعلِ دیگری پس از آن‌ها بیاید، فعلِ اصلی نیستند:
+# «مشه ببینیم» (می‌شه)، «رفتم بیارم»، «بیا بخور»
+SERIAL_VERBS = {"shodæn", "ræftæn", "amædæn"}
+
+
+def has_compound_part(tokens, i):
     tok = tokens[i]
-    if tok["pos"].startswith("v:lv") and i > 0 and tokens[i - 1]["pos"].startswith("pv"):
-        return f"{tokens[i - 1]['lemma']}_{tok['lemma']}"
-    return tok["lemma"]
+    if i == 0:
+        return False
+    prev = tokens[i - 1]
+    if tok["pos"].startswith("v:lv") and prev["pos"].startswith("pv"):
+        return True
+    return tok["lemma"] == "budæn" and prev["lemma"] in TRANSITIVE_ADJ
+
+
+def verb_key(tokens, i):
+    """کلیدِ فعل: برای فعل مرکب، جزء غیرفعلی + فعل (مثلاً baz_kærdæn، bælæd_budæn)."""
+    if has_compound_part(tokens, i):
+        return f"{tokens[i - 1]['lemma']}_{tokens[i]['lemma']}"
+    return tokens[i]["lemma"]
 
 
 def verb_start(tokens, i):
     """شروعِ مجموعه‌ی فعلی (اگر جزء غیرفعلی دارد، از آن‌جا)."""
-    if tokens[i]["pos"].startswith("v:lv") and i > 0 and tokens[i - 1]["pos"].startswith("pv"):
-        return i - 1
-    return i
+    return i - 1 if has_compound_part(tokens, i) else i
+
+
+def main_verb_after(tokens, i):
+    """نخستین فعلِ اصلیِ پس از جایگاهِ i؛ فعل‌های «می‌شه/رفتن/اومدن» اگر فعلِ دیگری
+    پس از آن‌ها بیاید، رد می‌شوند."""
+    verbs = [j for j in range(i + 1, len(tokens)) if is_main_verb(tokens[j])]
+    for k, j in enumerate(verbs):
+        if tokens[j]["lemma"] in SERIAL_VERBS and k + 1 < len(verbs) \
+                and not has_compound_part(tokens, j):
+            continue
+        return j
+    return None
 
 
 # ------------------------------------------------------------
@@ -104,7 +131,7 @@ for utt_id, g in toks.groupby("utt_id", sort=False):
         if tok["is_marker"] != 1:
             continue
         # فعلِ اصلیِ بعد از «را»
-        v_idx = next((j for j in range(i + 1, len(tokens)) if is_main_verb(tokens[j])), None)
+        v_idx = main_verb_after(tokens, i)
         # میزبان: نزدیک‌ترین واژه‌ی اسمی در ۴ واژه‌ی قبل
         h_idx = next((j for j in range(i - 1, max(i - 5, -1), -1) if is_nominal(tokens[j])), None)
         host = tokens[h_idx] if h_idx is not None else None

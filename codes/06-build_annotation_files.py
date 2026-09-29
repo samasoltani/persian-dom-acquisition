@@ -83,10 +83,13 @@ NON_OBJECT_VERBS = {
     "budæn", "shodæn", "amædæn", "ræftæn", "mandæn", "neshæstæn",
     "oftadæn", "xabidæn", "istadæn", "dævidæn", "gæshtæn", "residæn",
 }
+# فعل‌های مرکبی که با وجودِ «بودن» متعدی‌اند («اینو بلدی؟»)
+TRANSITIVE_COMPOUNDS = {"bælæd_budæn"}
 ra_count = marked[marked["group"] != "EXCLUDE"].groupby("verb_key").size()
 n_before = len(marked_ok)
 marked_ok = marked_ok[(marked_ok["verb_key"].map(ra_count).fillna(0) >= MIN_RA)
-                      & ~marked_ok["verb_key"].str.split("_").str[-1].isin(NON_OBJECT_VERBS)]
+                      & ~(marked_ok["verb_key"].str.split("_").str[-1].isin(NON_OBJECT_VERBS)
+                          & ~marked_ok["verb_key"].isin(TRANSITIVE_COMPOUNDS))]
 print(f"نشان‌دارهای حذف‌شده به دلیلِ فعلِ ربطی/ناگذر یا کم‌تکرار: {n_before - len(marked_ok)}")
 
 pool = pd.concat([marked_ok, unmarked], ignore_index=True)

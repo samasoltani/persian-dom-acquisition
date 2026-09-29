@@ -36,6 +36,8 @@ NON_OBJECT_VERBS = {
     "budæn", "shodæn", "amædæn", "ræftæn", "mandæn", "neshæstæn",
     "oftadæn", "xabidæn", "istadæn", "dævidæn", "gæshtæn", "residæn",
 }
+# فعل‌های مرکبی که با وجودِ «بودن» متعدی‌اند («اینو بلدی؟»)
+TRANSITIVE_COMPOUNDS = {"bælæd_budæn"}
 
 # صافیِ ۳: شخص و شمارِ ضمایرِ شخصی (برای مطابقه با فعل)
 PRONOUN_PERSON = {
@@ -166,7 +168,7 @@ steps = [
     ("۱) فعل کمتر از {} بار «را» گرفته".format(MIN_RA),
      lambda d: d["verb_ra_count"] < MIN_RA),
     ("۲) فعلِ ربطی/ناگذر (بودن، شدن، اومدن، رفتن، ...)",
-     lambda d: d["verb_lemma"].isin(NON_OBJECT_VERBS)),
+     lambda d: d["verb_lemma"].isin(NON_OBJECT_VERBS) & ~d["verb_key"].isin(TRANSITIVE_COMPOUNDS)),
     ("۳) ضمیرِ شخصی با شخصِ یکسان با فعل (فاعل)",
      lambda d: d["host_pos"].str.startswith("pro") & ~d["host_pos"].str.startswith("pro:dem")
                & (d["host_lemma"].map(PRONOUN_PERSON).fillna("") == d["verb_person"])
