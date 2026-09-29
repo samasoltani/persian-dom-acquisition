@@ -45,7 +45,7 @@ PRONOUN_PERSON = {
 PERSONS = {"1S", "2S", "3S", "1P", "2P", "3P"}
 
 # صافیِ ۶: اسم‌هایی که با «کردن» فعل مرکب می‌سازند ولی %xmor اسم برچسب زده
-LV_NOUNS = {"kar", "bazi", "komæk", "gerye", "xænde"}
+LV_NOUNS = {"kar", "bazi", "komæk", "gerye", "xænde", "fekr"}
 
 # صافیِ ۷: حرف‌اضافه‌هایی که %xmor گاهی prep برچسب نزده
 EXTRA_PREPS = {"vase", "bæra", "bære", "baraye", "bæraye"}

@@ -74,6 +74,21 @@ ctx = utts.set_index("utt_id")
 # ------------------------------------------------------------
 marked_ok = marked[(marked["host_lemma"] != "") & (marked["host_pos"] != "unk")
                    & (marked["verb_key"] != "")].copy()
+
+# همان محدودیت‌های فعلیِ قدم ۰۵ روی نشان‌دارها هم اعمال شود تا «محدوده‌ی تغییرپذیری»
+# برای هر دو گروه یکسان باشد (مثلاً «تو رو فراموش ... بودن» که فعلش اشتباه پیدا شده).
+# ⚠️ این دو مقدار باید با قدم ۰۵ یکی باشند.
+MIN_RA = 3
+NON_OBJECT_VERBS = {
+    "budæn", "shodæn", "amædæn", "ræftæn", "mandæn", "neshæstæn",
+    "oftadæn", "xabidæn", "istadæn", "dævidæn", "gæshtæn", "residæn",
+}
+ra_count = marked[marked["group"] != "EXCLUDE"].groupby("verb_key").size()
+n_before = len(marked_ok)
+marked_ok = marked_ok[(marked_ok["verb_key"].map(ra_count).fillna(0) >= MIN_RA)
+                      & ~marked_ok["verb_key"].str.split("_").str[-1].isin(NON_OBJECT_VERBS)]
+print(f"نشان‌دارهای حذف‌شده به دلیلِ فعلِ ربطی/ناگذر یا کم‌تکرار: {n_before - len(marked_ok)}")
+
 pool = pd.concat([marked_ok, unmarked], ignore_index=True)
 pool = pool[pool["group"].isin(["CHILD", "INPUT"])].copy()
 
